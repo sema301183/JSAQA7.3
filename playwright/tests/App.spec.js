@@ -1,61 +1,88 @@
 const { test, expect } = require("@playwright/test");
-const { chromium } = require("playwright");
-const {
-  email,
-  password,
-  incorrectEmail,
-  incorrectPassport,
-} = require("../user");
+const validData = require('./user');
 
-/*test("test", async ({ page }) => {
-  // Go to https://netology.ru/free/management#/
-  await page.goto("https://netology.ru/free/management#/");
+test("invalid value", async ({ page }) => {
 
-  // Click a
-  await page.click("a");
-  await expect(page).toHaveURL("https://netology.ru/");
+  await page.goto('https://netology.ru/?modal=sign_in', {waitUntil: "commit"});
 
-  // Click text=Учиться бесплатно
-  await page.click("text=Учиться бесплатно");
-  await expect(page).toHaveURL("https://netology.ru/free");
-
-  page.click("text=Бизнес и управление");
-
-  // Click text=Как перенести своё дело в онлайн
-  await page.click("text=Как перенести своё дело в онлайн");
-  await expect(page).toHaveURL(
-    "https://netology.ru/programs/kak-perenesti-svoyo-delo-v-onlajn-bp"
-  );
+  await page.click("input[name='email']");
+  await page.locator("input[name='email']").fill("userEmail");
+  await page.click("input[name='password']");
+  await page.locator("input[name='password']").fill("password");
+  await page.click("[data-testid='login-submit-btn']");
+  await page.isVisible("text=Неверный email");
+  //await page.screenshot({ path: './screenshot/invalidValue.png'});
 });
-*/
-test("Failed authorization", async () => {
-  const browser = await chromium.launch({
-    headless: false,
-    slowMo: 500,
-  });
-  const page = await browser.newPage("https://netology.ru/?modal=sign_in");
-  await page.goto("https://netology.ru/?modal=sign_in");
-  await page.fill('[placeholder="Email"]', incorrectEmail);
-  await page.fill('[placeholder="Пароль"]', incorrectPassport);
-  await page.click('[data-testid="login-submit-btn"]');
-  const error = await page.locator('[data-testid="login-error-hint"]');
-  await expect(error).toHaveText("Вы ввели неправильно логин или пароль");
-  await page.screenshot({ path: "screenshotFailed.png", fullPage: true });
-  browser.close();
-}, 60000);
 
-test("Successful authorization", async () => {
-  const browser = await chromium.launch({
-    headless: false,
-    slowMo: 500,
-  });
-  const page = await browser.newPage("https://netology.ru/?modal=sign_in");
-  await page.goto("https://netology.ru/?modal=sign_in");
-  await page.fill('[placeholder="Email"]', email);
-  await page.fill('[placeholder="Пароль"]', password);
-  await page.click('[data-testid="login-submit-btn"]');
-  //await expect(page).toHaveURL("https://netology.ru/profile");
-  await expect(page.locator("h2")).toContainText(["Мои курсы и профессии"]);
-  await page.screenshot({ path: "screenshotSuccessful.png", fullPage: true });
-  browser.close();
-}, 60000);
+test("authorization", async ({ page }) => {
+
+  await page.goto('https://netology.ru/?modal=sign_in', {waitUntil: "commit"});
+
+  await page.click("input[name='email']");
+  await page.locator("input[name='email']").fill(validData.userEmail);
+  await page.click("input[name='password']");
+  await page.locator("input[name='password']").fill(validData.password);
+  await page.click("[data-testid='login-submit-btn']");
+  await page.isVisible("text=Мои курсы и профессии");
+  //await page.screenshot({ path: './screenshot/authorization.png'});
+});
+
+test("invalid password", async ({ page }) => {
+
+  await page.goto('https://netology.ru/?modal=sign_in', {waitUntil: "commit"});
+
+  await page.click("input[name='email']");
+  await page.locator("input[name='email']").fill(validData.userEmail);
+  await page.click("input[name='password']");
+  await page.locator("input[name='password']").fill("password");
+  await page.click("[data-testid='login-submit-btn']");
+  await page.isVisible("[data-testid='login-error-hint']");
+});
+
+//проверка входа с паролем зарегестрированным в системе
+test("invalid emeil", async ({ page }) => {
+
+  await page.goto('https://netology.ru/?modal=sign_in', {waitUntil: "commit"});
+
+  await page.click("input[name='email']");
+  await page.locator("input[name='email']").fill('vasiapupkin@mail.ru');
+  await page.click("input[name='password']");
+  await page.locator("input[name='password']").fill(validData.password);
+  await page.click("[data-testid='login-submit-btn']");
+  await page.isVisible("[data-testid='login-error-hint']");
+});
+
+//email и пароль не зарегестрированны в системе
+test("unregistered user", async ({ page }) => {
+
+  await page.goto('https://netology.ru/?modal=sign_in', {waitUntil: "commit"});
+
+  await page.click("input[name='email']");
+  await page.locator("input[name='email']").fill('vasiapupkin@mail.ru');
+  await page.click("input[name='password']");
+  await page.locator("input[name='password']").fill('qwerty');
+  await page.click("[data-testid='login-submit-btn']");
+  await page.isVisible("[data-testid='login-error-hint']");
+});
+
+
+test("empty mail input field", async ({ page }) => {
+
+  await page.goto('https://netology.ru/?modal=sign_in', {waitUntil: "commit"});
+
+  await page.click("input[name='password']");
+  await page.locator("input[name='password']").fill('qwerty');
+  await page.click("[data-testid='login-submit-btn']");
+  await page.locator("text=Обязательно поле").isVisible();
+});
+
+
+test("empty password input field", async ({ page }) => {
+
+  await page.goto('https://netology.ru/?modal=sign_in', {waitUntil: "commit"});
+
+  await page.click("input[name='email']");
+  await page.locator("input[name='email']").fill('vasiapupkin@mail.ru');
+  await page.click("[data-testid='login-submit-btn']");
+  await page.locator("text=Обязательно поле").isVisible();
+});
