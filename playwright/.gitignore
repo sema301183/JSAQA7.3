@@ -3,7 +3,6 @@ user.js
 /playwright-report/
 /coverage/
 
-
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
